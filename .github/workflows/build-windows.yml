@@ -20,9 +20,10 @@ jobs:
       - name: فك حزمة المصدر
         shell: pwsh
         run: |
-          $zip = Get-ChildItem -Filter "SDFBranchSystem-source.zip" | Select-Object -First 1
-          if (-not $zip) { throw "SDFBranchSystem-source.zip غير موجود في جذر المستودع" }
-          Expand-Archive -Path $zip.FullName -DestinationPath "." -Force
+          $zips = @(Get-ChildItem -Filter "*.zip")
+          if ($zips.Count -eq 0) { throw "لا يوجد ملف zip في جذر المستودع" }
+          if ($zips.Count -gt 1) { throw "يوجد أكثر من ملف zip في الجذر — أبقِ ملفًا واحدًا فقط" }
+          Expand-Archive -Path $zips[0].FullName -DestinationPath "." -Force
 
       - name: تثبيت المتطلبات
         run: |
