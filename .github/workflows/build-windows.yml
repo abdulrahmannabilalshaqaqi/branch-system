@@ -1,0 +1,57 @@
+name: بناء نسخة Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: إعداد Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: فك حزمة المصدر
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Filter "SDFBranchSystem-source.zip" | Select-Object -First 1
+          if (-not $zip) { throw "SDFBranchSystem-source.zip غير موجود في جذر المستودع" }
+          Expand-Archive -Path $zip.FullName -DestinationPath "." -Force
+
+      - name: تثبيت المتطلبات
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r sdf_pkg/requirements-dev.txt
+
+      - name: تشغيل الاختبارات
+        run: python -m pytest sdf_pkg/tests/ -q
+
+      - name: بناء PyInstaller
+        working-directory: sdf_pkg
+        run: pyinstaller build/SDFBranchSystem.spec
+
+      - name: تثبيت Inno Setup
+        run: choco install innosetup -y
+
+      - name: بناء المثبت
+        working-directory: sdf_pkg
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build/setup.iss
+
+      - name: رفع المثبت
+        uses: actions/upload-artifact@v4
+        with:
+          name: SDFBranchSystem-Setup
+          path: sdf_pkg/dist/SDFBranchSystem-Setup-*.exe
+
+      - name: رفع النسخة المحمولة
+        uses: actions/upload-artifact@v4
+        with:
+          name: SDFBranchSystem-Portable
+          path: sdf_pkg/dist/SDFBranchSystem/
