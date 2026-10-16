@@ -25,10 +25,11 @@ jobs:
           if ($zips.Count -gt 1) { throw "يوجد أكثر من ملف zip في الجذر — أبقِ ملفًا واحدًا فقط" }
           Expand-Archive -Path $zips[0].FullName -DestinationPath "." -Force
 
-      - name: تثبيت المتطلبات
+      -       - name: تثبيت المتطلبات
         run: |
           python -m pip install --upgrade pip
           pip install -r sdf_pkg/requirements-dev.txt
+          pip install pypdf
 
       - name: تشغيل الاختبارات
         run: python -m pytest sdf_pkg/tests/ -q
